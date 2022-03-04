@@ -15,6 +15,10 @@ private:
     unsigned int size;  
     int err;            // error counter
 
+    unsigned long num;
+    uint8_t sign; // 0 none, 1='+', 2='-'
+    void _getANum(void);
+
 public:
     ScanUtil(char* str, unsigned int size)
     {
