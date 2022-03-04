@@ -12,7 +12,7 @@ class ScanUtil
 private:
     char* str=NULL;     // ptr to c-str to be analyzed (must be null-terminated)
     unsigned int pos;   // pos to current char
-    unsigned int size;
+    unsigned int size;  
     int err;            // error counter
 
 public:

@@ -1,5 +1,6 @@
 #include "scan_util.h"
 
+// * Pre-analysis OK
 // seek string and move to the position after
 // cstr is a null-terminated string
 // return 1 == found | 0 == not found
@@ -22,6 +23,7 @@ int ScanUtil::seek(char* cstr)
     return found;
 }
 
+// * Pre-Analysis OK
 // skip n bytes
 // return 1 == OK | 0 == error
 int ScanUtil::skip(unsigned int n)
@@ -34,11 +36,12 @@ int ScanUtil::skip(unsigned int n)
     return 0;
 }
 
+// * 
 // skip to first occurrence of char c
 // return 1 == found | 0 == not found
 int ScanUtil::skip(char c)
 {
-    while(pos+1 < size && str[pos] != c)
+    while(pos+1 < size && str[pos] != c && str[pos] != (char)0)
         pos++;
     if(str[pos] == c)
         return 1;
