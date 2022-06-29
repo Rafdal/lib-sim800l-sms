@@ -64,4 +64,12 @@ public:
     ~ScanUtil() {}
 };
 
+/* 
+ * Test with 
+
+    const char* str = "\r\n+CMT: \"+5493487541299\",\"\",\"22/06/28,22:02:24-12\"\r\nBoooenas\r\n";
+
+
+ */
+
 #endif
