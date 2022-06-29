@@ -70,12 +70,36 @@ void ScanUtil::substring_until(char* substr, char delimiter)
 // TODO
 void ScanUtil::_getANum(void){
 
+    char num_buf[16];
+    switch (str[pos])
+    {
+    case '-':
+        {
+            this->sign = 1;
+            pos++;
+        }
+        break;
+    case '+':
+        {
+            this->sign = 2;
+            pos++;
+        }
+        break;
+    default:
+        this->sign = 0;
+        break;
+    }
+    
+    while(str[pos]){
+
+    }
 }
 
 // TODO
 // get current number
 void ScanUtil::get_uint8_t(uint8_t* out)
 {
+
 }
 
 // TODO
