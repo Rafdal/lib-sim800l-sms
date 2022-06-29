@@ -4,24 +4,23 @@
 // * Pre-analysis OK
 // seek string and move to the position after
 // cstr is a null-terminated string
-// return 1 == found | 0 == not found
+// return 1 == found | 0 == not found or mismatch
 int ScanUtil::seek(char* cstr)
 {
-    int found=0;
-    uint8_t i=0;
-    while(cstr[i] != (char)0 && !found && pos+1 < size && str[pos] != (char)0){
+    uint8_t i = 0;
+    while( (cstr[i] != NULL) && (pos < size) && (str[pos] != NULL) ){
+
         if(str[pos] == cstr[i]) // found a match
             i++;
         else
             i=0;
         pos++;
 
-        if(cstr[i] == (char)0) // reached null-terminator of cstr means we have a full match of the string
-            found = 1;
+        if(cstr[i] == NULL) // reached null-terminator of cstr means we have a full match of the string
+            return 1;
     }
-    if(found == 0)
-        err++;
-    return found;
+    err++;
+    return 0;
 }
 
 // ! OJO: No tiene en cuenta el terminador nulo
@@ -42,7 +41,7 @@ int ScanUtil::skip(unsigned int n)
 // return 1 == found | 0 == not found
 int ScanUtil::skip(char c)
 {
-    while(pos+1 < size && str[pos] != c && str[pos] != (char)0)
+    while(pos < size && str[pos] != c && str[pos] != NULL)
         pos++;
     if(str[pos] == c)
         return 1;
@@ -53,12 +52,12 @@ int ScanUtil::skip(char c)
 // * ok
 // save substring until character delimiter is found (or NULL terminator)
 // substr should be initialized with enough size
-void ScanUtil::substring_until(char* substr, char delimiter)
+void ScanUtil::substring_until(char* substr, char delimiter, size_t maxSize)
 {
     uint8_t i=0;
-    while(pos < size && i < SCAN_UTIL_MAX_SUBSTR_SIZE){
-        if(str[pos] == (char)0 || str[pos] == delimiter){
-            substr[i] = (char)0; // write null terminator
+    while((pos < size) && (i < SCAN_UTIL_MAX_SUBSTR_SIZE)){
+        if((str[pos] == NULL) || (str[pos] == delimiter) || (maxSize != 0 && i >= maxSize)){
+            substr[i] = NULL; // write null terminator
             return;
         }
 

@@ -1,16 +1,14 @@
 #ifndef _SCAN_UTIL_H_
 #define _SCAN_UTIL_H_
 
-#include <Arduino.h>
-
 #define SCAN_UTIL_MAX_SUBSTR_SIZE 128
 
-#warning NOT TESTED
+#include <Arduino.h>
 
 class ScanUtil
 {
 private:
-    char* str=NULL;     // ptr to c-str to be analyzed (must be null-terminated)
+    char* str = NULL;     // ptr to c-str to be analyzed (must be null-terminated)
     unsigned int pos;   // pos to current char
     unsigned int size;  
     int err;            // error counter
@@ -20,17 +18,23 @@ private:
     void _getANum(void);
 
 public:
-    ScanUtil(char* str, unsigned int size)
+    ScanUtil(char* str, unsigned int size = 0)
     {
+        if(size == 0)
+            this->size = strlen(str);
+        else
+            this->size = size;
         this->str = str; 
-        this->size = size;
         this->pos = 0;
         this->err = 0;
     }
-    ScanUtil(char* str)
+    ScanUtil(const char* str, unsigned int size = 0)
     {
-        this->str = str; 
-        this->size = 0; 
+        if(size == 0)
+            this->size = strlen(str);
+        else
+            this->size = size;
+        strcpy(this->str, str);
         this->pos = 0;
         this->err = 0;
     }
@@ -48,7 +52,7 @@ public:
 
     // save substring until character delimiter is found (or NULL terminator)
     // substr should be initialized with enough size and null-terminated
-    void substring_until(char* substr, char delimiter);
+    void substring_until(char* substr, char delimiter, size_t maxSize = 0);
 
     // get current number
     void get_uint8_t(uint8_t* out);
