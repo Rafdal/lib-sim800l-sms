@@ -56,7 +56,7 @@ int ScanUtil::skip(char c)
 void ScanUtil::substring_until(char* substr, char delimiter)
 {
     uint8_t i=0;
-    while(pos+1 < size && i<SCAN_UTIL_MAX_SUBSTR_SIZE){
+    while(pos < size && i < SCAN_UTIL_MAX_SUBSTR_SIZE){
         if(str[pos] == (char)0 || str[pos] == delimiter){
             substr[i] = (char)0; // write null terminator
             return;
