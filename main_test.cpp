@@ -1,7 +1,7 @@
 /**
  * @file main_test.cpp
  * @author Rafael Dalzotto (rdalzotto@itba.edu.ar)
- * @brief This file is used for testing and development purposes and must be ignored
+ * @brief This file is used for testing and development purposes and should be ignored
  * @version 0.1
  * @date 2022-07-04
  * 
@@ -23,8 +23,9 @@ int main()
 {
     cout << "Start main.cpp" << endl;
 
-    const char *str = "\r\n+CMT: \"+5493487123456\",\"\",\"22/06/28,22:02:24-12\"\r\nBoooenas\r\n\0";
+    // const char *str = "\r\n+CMT: \"+5493487123456\",\"\",\"22/06/28,22:02:24-12\"\r\nBoooenas\r\n\0";
     // const char *str = "AT+CREG?\r\n\r\n+CREG: 032,1\r\nald82s\0";
+    const char *str = "AT+TEST\r\n\r\nNUM: 3487541299\0";
 
     char header[10];
     memset(header, 0, 10);
@@ -32,7 +33,7 @@ int main()
 
     printHeader(header);
 
-    ScanUtil scan(str);
+    ScanUtil scan(str, 24);
     if (strstr(header, "+CMT:") != NULL)
     {
         SMSMessage sms;
@@ -73,6 +74,20 @@ int main()
     else if(strstr(str, "\"SM\"") != NULL)
     {
 
+    }
+    else if(strstr(str, "TEST") != NULL)
+    {
+        scan.seek("NUM: ");
+        unsigned long num;
+        scan.get_unsigned_long(&num);
+
+        if(scan.error() == 0)
+            cout << "num: " << num << endl;
+    }
+
+    if(scan.error() != 0)
+    {
+        cout << "Scan ERROR\n";
     }
 
     return 0;

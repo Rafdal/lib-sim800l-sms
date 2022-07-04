@@ -83,7 +83,7 @@ public:
     int skipTo(char c);
 
     /**
-     * @brief Save substring until character delimiter is found (or NULLCHAR terminator)
+     * @brief Save normalized substring until character delimiter is found (or NULLCHAR terminator)
      * 
      * @param substr External buffer, should be initialized with enough size
      * @param delimiter delimiter stop character
@@ -118,14 +118,5 @@ public:
 
     ~ScanUtil() {}
 };
-
-
-/* 
- * Test with 
-
-    const char* str = "\r\n+CMT: \"+5493487541299\",\"\",\"22/06/28,22:02:24-12\"\r\nBoooenas\r\n";
-
-
- */
 
 #endif

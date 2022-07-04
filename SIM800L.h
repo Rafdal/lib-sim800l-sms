@@ -16,9 +16,10 @@
 #define SIM800L_READ_CHAR_TIMEOUT 50    // single char read timeout (ms)
 #define SIM800L_BAUDRATE 9600           // Software Serial baudrate with module
 
-#define DEBUG
+#define DEBUG_SIM800L           // uncomment / comment to set debug on / off
+#define PRINT_BUFFER_SIM800L 
 
-#ifdef DEBUG 
+#ifdef DEBUG_SIM800L 
 #define DEBUG_PRINT(a) Serial.println(a);
 #else
 #define DEBUG_PRINT(a)
@@ -32,6 +33,8 @@ public:
     void begin(SoftwareSerial* simModule, void (*rstFunc)(void));
 
     void run();
+
+    void reset();
 
     void printBuffer();
 

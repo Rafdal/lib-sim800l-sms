@@ -9,10 +9,8 @@ void SIM800L::begin(SoftwareSerial *sim_module, void (*rst)(void))
 		this->sim_module = sim_module;
 		sim_module->begin(SIM800L_BAUDRATE);
 		sim_module->setTimeout(SIM800L_READ_CHAR_TIMEOUT); 	// timeout per character
-		sim_module->print(F("AT+CFUN=1,1\r\n")); 			// Software Reset
-		_delay_ms(50);
 
-		printAndWaitOK(F("AT"));
+		printAndWaitOK(F("AT"));				// Sync
 		printAndWaitOK(F("AT+CMGF=1")); 		// Select SMS Message Format (1 = text mode)
 		printAndWaitOK(F("AT+CNMI=1,2,0,0,0")); // SMS Message Indications
 		printAndWaitOK(F("AT+CLIP=1"));			// Show incoming call telephone number
@@ -22,7 +20,6 @@ void SIM800L::begin(SoftwareSerial *sim_module, void (*rst)(void))
 void SIM800L::readToBuffer()
 {
 	unsigned long timestamp = millis();
-
 	bufferSize = 0;
 	
 	// read until no more incoming bytes
@@ -42,7 +39,7 @@ void SIM800L::readToBuffer()
 
 void SIM800L::parseIncomingSMS()
 {
-	ScanUtil scan(str);
+	ScanUtil scan(buffer, bufferSize);
 	SMSMessage sms;
 
 	scan.seek("+CMT: \"");
@@ -94,6 +91,7 @@ void SIM800L::run()
 			if(scan.error() == 0)
 			{
 				cout << "Net status: " << (int)netStatus << endl;
+				// TODO: Save this somewhere
 			}
 		}
 		else if(strstr(str, "\"SM\"") != NULL)
@@ -103,7 +101,9 @@ void SIM800L::run()
 			printAndWaitOK(F("AT+CNMI=1,2,0,0,0")); // SMS Message Indications
 		}
 
+    	#ifdef PRINT_BUFFER_SIM800L
 		printBuffer();
+		#endif
 	}
 }
 
@@ -152,11 +152,24 @@ char* SIM800L::read_module_bytes(size_t nbytes, char terminator = '\0')
 	return buffer;
 }
 
+void SIM800L::reset()
+{
+	if(sim_module != NULL)
+	{
+		sim_module->print(F("AT+CFUN=1,1\r\n")); 	// Software Reset
+		_delay_ms(100);
+		if(resetCallback != NULL)
+			this->resetCallback();
+
+		begin(sim_module, resetCallback);
+	}
+}
+
 // Print flash-stored string (with F macro) to the module and wait for OK response
 // Max size is SIM800L_COMM_BUF_SIZE (with null terminator)
 void SIM800L::printAndWaitOK(const __FlashStringHelper *msg)
 {
-	if (this->resetCallback != NULL)
+	if (this->sim_module != NULL)
 	{
 		// retrieved from WString.h and modified
 		PGM_P p = reinterpret_cast<PGM_P>(msg);
@@ -190,9 +203,10 @@ void SIM800L::printAndWaitOK(const __FlashStringHelper *msg)
 			sim_module->print(F("\r\n"));
 
 			_delay_ms(50); // without this delay it doesnt works (maybe a buffering problem)
-			
+			// TODO: Test this again without delay, but with readToBuffer
+
 			if (timestamp + timeout <= millis()) // If long timeout is excedeed
-				this->resetCallback();
+				reset();
 		}
 	}
 }
