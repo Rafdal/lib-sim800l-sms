@@ -59,13 +59,6 @@ public:
     void onMessage(SMSCallback callback);
 
     /**
-     * @brief Set RING Callback
-     * 
-     * @param callback pointer to void function that receives char array
-     */
-    void onCallRing(RINGCallback callback);
-
-    /**
      * @brief This does what it says
      * @param msg SMSMessage Object
      */
