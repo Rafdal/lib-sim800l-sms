@@ -11,11 +11,11 @@ void SIM800L::begin(SoftwareSerial *sim_module, void (*rst)(void))
 		sim_module->setTimeout(SIM800L_READ_CHAR_TIMEOUT); 	// timeout per character
 		sim_module->print(F("AT+CFUN=1,1\r\n")); 			// Software Reset
 
-		printAndWaitOK(F("AT\r\n"));
-		printAndWaitOK(F("AT+CMGF=1\r\n")); 		// Select SMS Message Format (1 = text mode)
-		printAndWaitOK(F("AT+CNMI=1,2,0,0,0\r\n")); // SMS Message Indications
-		printAndWaitOK(F("AT+COPS?\r\n"));
-		// printAndWaitOK(F("AT+CLIP=1\r\n"));
+		printAndWaitOK(F("AT"));
+		printAndWaitOK(F("AT+CMGF=1")); 		// Select SMS Message Format (1 = text mode)
+		printAndWaitOK(F("AT+CNMI=1,2,0,0,0")); // SMS Message Indications
+		printAndWaitOK(F("AT+CLIP=1"));
+		printAndWaitOK(F("AT+COPS?"));
 	}
 }
 
@@ -110,7 +110,8 @@ void SIM800L::printAndWaitOK(const __FlashStringHelper *msg)
 
 		DEBUG_PRINT(msg_buf)
 
-		sim_module->print(msg_buf);		
+		sim_module->print(msg_buf);
+		sim_module->print(F("\r\n"));
 		unsigned long timestamp = millis();
 
 		while (strstr(read_module_bytes(32), "OK") == NULL) // Read just 8 bytes
@@ -118,6 +119,7 @@ void SIM800L::printAndWaitOK(const __FlashStringHelper *msg)
 			_delay_ms(20); // without this delay it doesnt works (maybe a buffering problem)
 
 			sim_module->print(msg);
+			sim_module->print(F("\r\n"));
 			
 			if (timestamp + timeout <= millis()) // If timeout is excedeed
 				this->resetCallback();
