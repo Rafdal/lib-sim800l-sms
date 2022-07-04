@@ -1,9 +1,19 @@
+/**
+ * @file SIM800L.cpp
+ * @author Rafael Dalzotto (rdalzotto@itba.edu.ar)
+ * @brief Main library source file
+ * @date 2022-07-04
+ * 
+ * @copyright Copyright (c) 2022
+ */
+
 #include "SIM800L.h"
 
-// Set pointer to SoftwareSerial sim module and Reset callback
-void SIM800L::begin(SoftwareSerial *sim_module, void (*rst)(void))
+#define SMS_TERMINATOR	(char)26  // required according to the datasheet
+
+void SIM800L::begin(SoftwareSerial *sim_module, VoidCallbackVoid rst)
 {
-	if (sim_module != NULL && rst != NULL)
+	if (sim_module != NULL)
 	{
 		this->resetCallback = rst;
 		this->sim_module = sim_module;
@@ -31,9 +41,7 @@ void SIM800L::readToBuffer()
 			timestamp = millis();
 		}
 		else if(bufferSize >= SIM800L_READ_BUF_SIZE)
-		{
 			break;
-		}
 	}
 }
 
@@ -59,56 +67,86 @@ void SIM800L::parseIncomingSMS()
 			scan.substring(sms.message, '\r', SMS_MESSAGE_MAX_LEN);
 			sms.size = strlen(sms.message);
 
-			if(scan.error() == 0)
+			if(scan.error() == 0)// no errors
 			{
-				sms.print(); // no errors
-				// TODO: SMS Callback
+				#ifdef PRINT_SMS_SIM800L
+				sms.print();
+				#endif
+				if(smsCallback != NULL)
+				{
+					smsCallback(sms);
+				}
+				else
+					DEBUG_PRINT(F("SMS Callback not set!"))
 			}
 		}
 	}
 }
 
+void SIM800L::sendMessage(SMSMessage& sms)
+{
+	if(sim_module != NULL)
+	{
+		printAndWaitOK(F("AT+CMGF=1")); 		// Select SMS Message Format (1 = text mode)
+		_delay_ms(100);
+		sim_module->print(F("AT+CMGS=\""));
+		sim_module->print(sms.phone);
+		sim_module->print(F("\"\r"));
+		for(int i=0; i < sms.size && !(sms.message[i]); i++)
+			sim_module->print(sms.message[i]);
+
+		_delay_ms(30);
+		sim_module->print(SMS_TERMINATOR);
+		sim_module->print(F("\r\n"));
+	}
+}
+
+
 void SIM800L::run()
 {
+	if(sim_module == NULL)
+		return;
+		
 	// this is non-blocking
 	if(sim_module->available()) // if we have some bytes
 	{
 		readToBuffer();
+		printBuffer();
 
-		char header[10];
-		memset(header, 0, 10);
-		strncpy(header, buffer, 9);
+		uint8_t headSize = 12;
+		char header[headSize];
+		memset(header, 0, headSize);
+		strncpy(header, buffer, headSize - 1); // Dont erase last null character!
 
-		if (strstr(header, "+CMT:") != NULL)
+		// Choose action by header content
+		if (strstr(header, "+CMT:") != NULL)	// SMS Message
 		{
 			parseIncomingSMS();
 		}
-		else if(strstr(header, "AT+CREG") != NULL)
+		else if(strstr(header, "+CREG") != NULL) // Network Status
 		{
-			uint8_t netStatus = 0;
 			scan.skipTo(',');
 			scan.get_uint8_t(&netStatus);
-			if(scan.error() == 0)
+			if(scan.error() > 0)
 			{
-				cout << "Net status: " << (int)netStatus << endl;
-				// TODO: Save this somewhere
+				DEBUG_PRINT(F("error reading netStatus"))
+				netStatus = 0;
 			}
 		}
-		else if(strstr(str, "\"SM\"") != NULL)
+		else if(strstr(str, "\"SM\"") != NULL)  // "SM"
 		{
+			DEBUG_PRINT(F("Received \"SM\""))
 			// This should not happen, but here is a workaround
 			printAndWaitOK(F("AT+CMGF=1")); 		// Select SMS Message Format (1 = text mode)
 			printAndWaitOK(F("AT+CNMI=1,2,0,0,0")); // SMS Message Indications
 		}
 
-    	#ifdef PRINT_BUFFER_SIM800L
-		printBuffer();
-		#endif
 	}
 }
 
 void SIM800L::printBuffer()
 {
+	#ifdef PRINT_BUFFER_SIM800L
 	Serial.print("\n\n@ SIM800L:\nbuffer: \"");
 	for(unsigned int i=0; i < bufferSize; i++)
 	{
@@ -135,6 +173,7 @@ void SIM800L::printBuffer()
 		Serial.print(",");
 	}
 	Serial.println("}");
+	#endif
 }
 
 // Read n bytes from sim module or until terminator has been found and store them in buffer

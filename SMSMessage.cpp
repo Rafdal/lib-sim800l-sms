@@ -1,3 +1,12 @@
+/**
+ * @file SMSMessage.cpp
+ * @author Rafael Dalzotto (rdalzotto@itba.edu.ar)
+ * @brief SMS Message data structure
+ * @date 2022-07-04
+ * 
+ * @copyright Copyright (c) 2022
+ */
+
 #include "SMSMessage.h"
 
 // Testing definitions, just ignore this

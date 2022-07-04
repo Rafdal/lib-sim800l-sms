@@ -20,12 +20,6 @@ int ScanUtil::seek(char *cstr)
     return 0;
 }
 
-int ScanUtil::seek(const char *cstr)
-{
-    char *p = const_cast<char *>(cstr);
-    return seek(p);
-}
-
 int ScanUtil::skip(unsigned int n)
 {
     if (pos + n < size)
@@ -114,8 +108,11 @@ bool ScanUtil::getANum(void)
     // Note that we should be positioned at the first digit
     scanNum = 0;
     unsigned long lastNum = 0;
+    bool foundNumbers = false;
     while ((str[pos] != NULLCHAR) && (pos < size) && isdigit(str[pos]))
     {
+        foundNumbers = true;
+
         // add digits one by one
         scanNum = (scanNum * 10) + (unsigned long)(str[pos] - '0');
 
@@ -128,8 +125,13 @@ bool ScanUtil::getANum(void)
         pos++;
     }
 
+    if(!foundNumbers)
+    {
+        err++;
+        return false;
+    }
+    
     pos++; // skip the non-digit character and move next
-
     return true;
 }
 
@@ -179,7 +181,7 @@ void ScanUtil::get_int(int *out)
                     return;
                 }
             }
-            else
+            else if(sign == -1)
             {
                 if(scanNum <= (-INT16_MIN))
                 {
@@ -190,11 +192,6 @@ void ScanUtil::get_int(int *out)
         }     
     }
     err++;
-}
-
-int ScanUtil::error(void)
-{
-    return err;
 }
 
 char ScanUtil::normalizeChar(char c)

@@ -119,4 +119,15 @@ public:
     ~ScanUtil() {}
 };
 
+inline int ScanUtil::error(void)
+{
+    return err;
+}
+
+inline int ScanUtil::seek(const char *cstr)
+{
+    char *p = const_cast<char *>(cstr);
+    return seek(p);
+}
+
 #endif

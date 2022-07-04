@@ -1,3 +1,12 @@
+/**
+ * @file SMSMessage.h
+ * @author Rafael Dalzotto (rdalzotto@itba.edu.ar)
+ * @brief SMS Message data structure
+ * @date 2022-07-04
+ * 
+ * @copyright Copyright (c) 2022
+ */
+
 #ifndef SMSMESSAGE_H
 #define SMSMESSAGE_H
 
@@ -41,6 +50,11 @@ struct DateTime
         min = m;
         sec = s;
     }
+
+    /**
+     * @brief print date to c-string in compact format
+     * @param buf 
+     */
     void formatTo(char* buf)
     {
         const char* format = "%02u-%u-%02u %02u:%02u:%02u";
