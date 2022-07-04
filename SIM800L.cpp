@@ -72,12 +72,15 @@ void SIM800L::parseIncomingSMS()
 				#ifdef PRINT_SMS_SIM800L
 				sms.print();
 				#endif
+
 				if(smsCallback != NULL)
 				{
 					smsCallback(sms);
 				}
 				else
+				{
 					DEBUG_PRINT(F("SMS Callback not set!"))
+				}
 			}
 		}
 	}
@@ -92,7 +95,8 @@ void SIM800L::sendMessage(SMSMessage& sms)
 		sim_module->print(F("AT+CMGS=\""));
 		sim_module->print(sms.phone);
 		sim_module->print(F("\"\r"));
-		for(int i=0; i < sms.size && !(sms.message[i]); i++)
+
+		for(int i=0; i < sms.size && !(sms.message[i]) && i < SMS_MESSAGE_MAX_LEN; i++)
 			sim_module->print(sms.message[i]);
 
 		_delay_ms(30);
@@ -119,12 +123,13 @@ void SIM800L::run()
 		strncpy(header, buffer, headSize - 1); // Dont erase last null character!
 
 		// Choose action by header content
-		if (strstr(header, "+CMT:") != NULL)	// SMS Message
+		if (strstr(header, "+CMT:") != NULL)	// New SMS received
 		{
 			parseIncomingSMS();
 		}
 		else if(strstr(header, "+CREG") != NULL) // Network Status
 		{
+			ScanUtil scan(buffer, bufferSize);
 			scan.skipTo(',');
 			scan.get_uint8_t(&netStatus);
 			if(scan.error() > 0)
@@ -178,7 +183,7 @@ void SIM800L::printBuffer()
 
 // Read n bytes from sim module or until terminator has been found and store them in buffer
 // returns pointer to buffer
-char* SIM800L::read_module_bytes(size_t nbytes, char terminator = '\0')
+char* SIM800L::read_module_bytes(size_t nbytes, char terminator)
 {
 	size_t nread = sim_module->readBytesUntil(terminator, buffer, nbytes);
 

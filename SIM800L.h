@@ -82,12 +82,17 @@ public:
     void reset();
 
     /**
-     * @brief Return last connection status
+     * @brief Return last connection status received
      * 
-     * @retval true 
-     * @retval false 
+     * @retval true = connected
+     * @retval false = disconnected
      */
-    bool checkConnection();
+    bool connected();
+
+    /**
+     * @brief Ask the module for the current network status (non-blocking)
+     */
+    void checkConnection();
 
     /**
      * @brief Print buffer content and bytes
@@ -99,7 +104,7 @@ private:
 
     SoftwareSerial *sim_module = NULL;
 
-    VoidCallbackVoid resetCallback = NULL; // Reset callback
+    VoidCallbackVoid resetCallback = NULL;
     SMSCallback smsCallback = NULL;
 
     char buffer[SIM800L_READ_BUF_SIZE];
@@ -107,9 +112,11 @@ private:
 
     uint8_t netStatus = 0;
 
-    void printAndWaitOK(const __FlashStringHelper * msg); // Print null-terminated string and wait for OK response
+    // Print Flash-stored string and wait for OK response. This is printed with CRLF
+    void printAndWaitOK(const __FlashStringHelper * msg);
 
-    char* read_module_bytes(size_t nbytes, char terminator); // read n bytes from module or until terminator has been found
+    // read n bytes from module or until terminator has been found
+    char* read_module_bytes(size_t nbytes, char terminator = '\0');
 
     // read incoming bytes until timeout and store them in buffer
     void readToBuffer();
@@ -120,6 +127,17 @@ private:
 inline void SIM800L::onMessage(SMSCallback c)
 {
     smsCallback = c;
+}
+
+inline bool SIM800L::connected()
+{
+    return (netStatus == 1);
+}
+
+inline void SIM800L::checkConnection()
+{
+    if(sim_module != NULL)
+        sim_module->print(F("AT+CREG?\r\n"));
 }
 
 #endif
