@@ -42,7 +42,10 @@ int ScanUtil::skipTo(char c)
     while (pos < size && str[pos] != c && str[pos] != NULLCHAR)
         pos++;
     if (str[pos] == c)
+    {
+        pos++; // skip this char
         return 1;
+    }
     err++;
     return 0;
 }

@@ -3,15 +3,18 @@
 
 #include <Arduino.h>
 
-
 // If using software serial
 #ifndef SoftwareSerial_h
 #include <SoftwareSerial.h>
 #endif
 
-#define SIM800L_COMM_BUF_SIZE 32
-#define SIM800L_READ_BUF_SIZE 256
+#include "ScanUtil.h"
+#include "SMSMessage.h"     // SMS data structure
+
+#define SIM800L_COMM_BUF_SIZE 32        // command buffer size
+#define SIM800L_READ_BUF_SIZE 256       // read buffer size
 #define SIM800L_READ_CHAR_TIMEOUT 50    // single char read timeout (ms)
+#define SIM800L_BAUDRATE 9600           // Software Serial baudrate with module
 
 #define DEBUG
 
@@ -47,6 +50,11 @@ private:
     void printAndWaitOK(const __FlashStringHelper * msg); // Print null-terminated string and wait for OK response
 
     char* read_module_bytes(size_t nbytes, char terminator); // read n bytes from module or until terminator has been found
+
+    // read incoming bytes until timeout and store them in buffer
+    void readToBuffer();
+
+    void parseIncomingSMS();
 };
 
 
