@@ -25,6 +25,7 @@ SMSMessage::SMSMessage()
     memset(message, 0, SMS_MESSAGE_MAX_LEN);
 }
 
+
 void SMSMessage::print()
 {
     PRINT("@ SMS \n")

@@ -74,8 +74,21 @@ public:
 
     void print();
 
+    /**
+     * @brief Search str inside message. This is a wrapper of strstr func
+     * 
+     * @param str string to search
+     * @return char* pointer to the first occurrence of str inside message or NULL if not found
+     */
+    char* search(const char* str);
+
     SMSMessage();
     ~SMSMessage() {}
 };
+
+inline char* SMSMessage::search(const char* str)
+{
+    return strstr(message, str);
+}
 
 #endif

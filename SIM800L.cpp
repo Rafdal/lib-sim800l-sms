@@ -138,7 +138,7 @@ void SIM800L::run()
 				netStatus = 0;
 			}
 		}
-		else if(strstr(str, "\"SM\"") != NULL)  // "SM"
+		else if(strstr(buffer, "\"SM\"") != NULL)  // "SM"
 		{
 			DEBUG_PRINT(F("Received \"SM\""))
 			// This should not happen, but here is a workaround

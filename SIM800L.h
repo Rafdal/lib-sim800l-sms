@@ -10,10 +10,12 @@
 #ifndef _SIM800L_H_
 #define _SIM800L_H_
 
+#ifndef LOCAL_CPP_TEST
 #include <Arduino.h>
 
 #ifndef SoftwareSerial_h
 #include <SoftwareSerial.h>
+#endif
 #endif
 
 #include "ScanUtil.h"       // c-string scan utilities
@@ -22,7 +24,7 @@
 #define SIM800L_COMM_BUF_SIZE 32        // command buffer size
 #define SIM800L_READ_BUF_SIZE 256       // read buffer size
 #define SIM800L_READ_CHAR_TIMEOUT 50    // single char read timeout (ms)
-#define SIM800L_BAUDRATE 9600           // Software Serial baudrate with module
+#define SIM800L_BAUDRATE 9600           // SoftwareSerial baudrate with module
 
 #define DEBUG_SIM800L           // uncomment / comment to set debug on / off
 #define PRINT_BUFFER_SIM800L    // same thing here
@@ -92,6 +94,10 @@ public:
      */
     void printBuffer();
 
+protected:  // for testing purposes
+    char buffer[SIM800L_READ_BUF_SIZE];
+    unsigned int bufferSize = 0;
+
 private:
     unsigned long timeout = 12000L;  // Default timeout (12000ms)
 
@@ -99,9 +105,6 @@ private:
 
     VoidCallbackVoid resetCallback = NULL;
     SMSCallback smsCallback = NULL;
-
-    char buffer[SIM800L_READ_BUF_SIZE];
-    unsigned int bufferSize = 0;
 
     uint8_t netStatus = 0;
 

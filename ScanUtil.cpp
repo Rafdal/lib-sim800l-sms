@@ -183,7 +183,7 @@ void ScanUtil::get_int(int *out)
             }
             else if(sign == -1)
             {
-                if(scanNum <= (-INT16_MIN))
+                if((-(int)scanNum) >= INT16_MIN) // ugly way to avoid warnings
                 {
                     *out = -1 * ((int) scanNum);
                     return;
