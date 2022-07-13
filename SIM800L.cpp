@@ -88,15 +88,18 @@ void SIM800L::parseIncomingSMS()
 
 void SIM800L::sendMessage(SMSMessage& sms)
 {
+	DEBUG_PRINT(F("@SEND: Sending message:"));
+	sms.print();
+
 	if(sim_module != NULL)
 	{
-		printAndWaitOK(F("AT+CMGF=1")); 		// Select SMS Message Format (1 = text mode)
+		sim_module->print(F("AT+CMGF=1\r\n"));	// Select SMS Message Format (1 = text mode)
 		_delay_ms(100);
 		sim_module->print(F("AT+CMGS=\""));
 		sim_module->print(sms.phone);
 		sim_module->print(F("\"\r"));
 
-		for(int i=0; i < sms.size && !(sms.message[i]) && i < SMS_MESSAGE_MAX_LEN; i++)
+		for(int i=0; i < sms.size && (sms.message[i] != NULLCHAR) && i < SMS_MESSAGE_MAX_LEN; i++)
 			sim_module->print(sms.message[i]);
 
 		_delay_ms(30);
