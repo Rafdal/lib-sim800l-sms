@@ -6,7 +6,7 @@
 #ifndef _SCAN_UTIL_H_
 #define _SCAN_UTIL_H_
 
-#define SCAN_UTIL_MAX_SUBSTR_SIZE 64
+#define SCAN_UTIL_MAX_SUBSTR_SIZE 128
 
 #ifndef LOCAL_CPP_TEST
 #include <Arduino.h>
@@ -19,23 +19,6 @@
 
 class ScanUtil
 {
-private:
-    char* str = NULL;       // ptr to c-str to be analyzed (must be null-terminated)
-    unsigned int size;      // size of str
-    unsigned int pos=0;     // pos to current char of str
-    int err=0;              // error counter
-
-
-    unsigned long scanNum;
-    int sign;
-    /**
-     * @brief Get a number
-     * 
-     * @retval true - success
-     * @retval false - error
-     */
-    bool getANum(void);
-
 public:
     ScanUtil(char* str, unsigned int size = 0)
     {
@@ -117,6 +100,23 @@ public:
     char normalizeChar(char c);
 
     ~ScanUtil() {}
+
+private:
+    char* str = NULL;       // ptr to c-str to be analyzed (must be null-terminated)
+    unsigned int size;      // size of str
+    unsigned int pos=0;     // pos to current char of str
+    int err=0;              // error counter
+
+
+    unsigned long scanNum;
+    int sign;
+    /**
+     * @brief Get a number
+     * 
+     * @retval true - success
+     * @retval false - error
+     */
+    bool getANum(void);
 };
 
 inline int ScanUtil::error(void)

@@ -25,6 +25,63 @@ SMSMessage::SMSMessage()
     memset(message, 0, SMS_MESSAGE_MAX_LEN);
 }
 
+int SMSMessage::countWords()
+{
+    int count = 0;
+    char lastChar = '\0';
+
+    for (int i = 0; (i < size) && (message[i]); i++)
+    {
+        char c = message[i];
+        if(!isalnum(lastChar) && isalnum(c))
+            count++;
+        lastChar = c;
+    }
+    return count;
+}
+
+// TODO: Optimize this shit
+bool SMSMessage::getNWord(int idx, char* word)
+{
+    int count = -1;
+    char lastChar = '\0';
+    int wordSize = 0;
+
+    for (int i = 0; (i < size) && (message[i]); i++)
+    {
+        char c = message[i];
+        if(!isalnum(lastChar) && isalnum(c)) // detect word first alphanumeric char
+            count++;
+
+        if((count == idx) && isalnum(c) && (wordSize < (SMS_WORD_SIZE_MAX - 1))) // last char = 0
+        {
+            word[wordSize++] = c;
+        }
+        else if(wordSize > 0)
+        {
+            break;
+        }
+
+        lastChar = c;
+    }
+
+    if(wordSize > 0)
+    {
+        word[wordSize] = '\0'; // set NULL terminator
+        return true;
+    }
+    return false;
+}
+
+// TODO: Optimize this shit
+bool SMSMessage::compareWordAt(int n, char* wordToCompare)
+{
+    char word[SMS_WORD_SIZE_MAX];
+    getNWord(n, word);
+    if(strcmp(word, wordToCompare) == 0)
+        return true;
+    return false;
+}
 
 void SMSMessage::print()
 {

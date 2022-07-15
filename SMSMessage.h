@@ -12,9 +12,11 @@
 
 #define SMS_MESSAGE_MAX_LEN     64
 #define SMS_PHONE_NUMBER_SIZE   15  // with '+' and NULL terminator
+#define SMS_WORD_SIZE_MAX       16
 
 #ifndef LOCAL_CPP_TEST
 #include <Arduino.h>
+
 #else
 #include <cstring>
 #include <cstdint>
@@ -38,18 +40,6 @@ struct DateTime
         month = 0;
         day = 0;
     }
-    void date(uint8_t y, uint8_t m, uint8_t d)
-    {
-        year = y;
-        month = m;
-        day = d;
-    }
-    void time(uint8_t h, uint8_t m, uint8_t s)
-    {
-        hour = h;
-        min = m;
-        sec = s;
-    }
 
     /**
      * @brief print date to c-string in compact format
@@ -64,7 +54,6 @@ struct DateTime
 
 class SMSMessage
 {
-private:
 public:
 
     int size = 0;
@@ -72,7 +61,39 @@ public:
     char phone[SMS_PHONE_NUMBER_SIZE];
     DateTime date;
 
+    /**
+     * @brief Print SMS content
+     * 
+     */
     void print();
+
+    /**
+     * @brief Number of words that appear in the message
+     * 
+     * @return int = word count
+     */
+    int countWords();
+
+    /**
+     * @brief Get the word that appears in the N possition 
+     * 
+     * @param n word count to look for
+     * @param word external buffer initialized with enough size 
+     * @retval true = found OK
+     * @retval false = ERROR
+     */
+    bool getNWord(int n, char* word);
+
+    /**
+     * @brief Compare word that appears in the N possition 
+     * 
+     * @param n word count to look for
+     * @param wordToCompare c-string to match
+     * @retval true = match OK
+     * @retval false = word does not match
+     */
+    bool compareWordAt(int n, char* wordToCompare);
+    bool compareWordAt(int n, const char* wordToCompare);
 
     /**
      * @brief Search str inside message. This is a wrapper of strstr func
@@ -82,9 +103,22 @@ public:
      */
     char* search(const char* str);
 
+    /**
+     * @brief Construct a new SMSMessage object
+     * 
+     */
     SMSMessage();
     ~SMSMessage() {}
+
+private:
+
 };
+
+inline bool SMSMessage::compareWordAt(int n, const char* wordToCompare)
+{
+    char *p = const_cast<char *>(wordToCompare);
+    return compareWordAt(n, p);
+}
 
 inline char* SMSMessage::search(const char* str)
 {

@@ -23,8 +23,11 @@
 
 #define SIM800L_COMM_BUF_SIZE 32        // command buffer size
 #define SIM800L_READ_BUF_SIZE 256       // read buffer size
-#define SIM800L_READ_CHAR_TIMEOUT 50    // single char read timeout (ms)
+#define SIM800L_READ_CHAR_TIMEOUT 25    // single char read timeout (ms)
 #define SIM800L_BAUDRATE 9600           // SoftwareSerial baudrate with module
+
+#define SIM800L_CONNECTION_CHECK_INTERVAL   15000L  // Time interval to check network
+#define SIM800L_AUTO_RESET_AFTER_CHECK_FAILS  4     // amount of times to wait after reset while disconnected
 
 #define DEBUG_SIM800L           // uncomment / comment to set debug on / off
 #define PRINT_BUFFER_SIM800L    // same thing here
@@ -36,7 +39,8 @@
 #define DEBUG_PRINT(a)
 #endif
 
-typedef void (*VoidCallbackVoid)(void);
+typedef void (*VoidCallback)(void);
+typedef void (*BoolCallback)(bool);
 typedef void (*SMSCallback)(SMSMessage&);
 
 class SIM800L
@@ -51,7 +55,7 @@ public:
      * @param simModule pointer to SoftwareSerial instance of SIM module
      * @param rstFunc (optional) function callback to be executed after SIM800L software reset
      */
-    void begin(SoftwareSerial* simModule, VoidCallbackVoid rstFunc = NULL);
+    void begin(SoftwareSerial* simModule, VoidCallback rstFunc = NULL);
 
     /**
      * @brief Set SMS Callback
@@ -59,6 +63,13 @@ public:
      * @param callback pointer to void function that receives SMSMessage object
      */
     void onMessage(SMSCallback callback);
+
+    /**
+     * @brief Set connection state change callback
+     * 
+     * @param callback function that receives connection state (true = connected)
+     */
+    void onConnectionStateChanged(BoolCallback callback);
 
     /**
      * @brief This does what it says
@@ -99,20 +110,21 @@ protected:  // for testing purposes
     unsigned int bufferSize = 0;
 
 private:
-    unsigned long timeout = 12000L;  // Default timeout (12000ms)
+    unsigned long timeout = 15000L;  // Default timeout (12000ms)
 
     SoftwareSerial *sim_module = NULL;
 
-    VoidCallbackVoid resetCallback = NULL;
+    VoidCallback resetCallback = NULL;
     SMSCallback smsCallback = NULL;
+    BoolCallback netChangedCallback = NULL;
 
-    uint8_t netStatus = 0;
+    uint8_t netStatus = 0; // disconnected
+    uint8_t lastNetStatus = 0;
+    unsigned long lastMsConnectionCheckInterval = 0;
+    uint8_t disconnectedCount = 0;
 
     // Print Flash-stored string and wait for OK response. This is printed with CRLF
     void printAndWaitOK(const __FlashStringHelper * msg);
-
-    // read n bytes from module or until terminator has been found
-    char* read_module_bytes(size_t nbytes, char terminator = '\0');
 
     // read incoming bytes until timeout and store them in buffer
     void readToBuffer();
@@ -134,6 +146,11 @@ inline void SIM800L::checkConnection()
 {
     if(sim_module != NULL)
         sim_module->print(F("AT+CREG?\r\n"));
+}
+
+inline void SIM800L::onConnectionStateChanged(BoolCallback callback)
+{
+    netChangedCallback = callback;
 }
 
 #endif

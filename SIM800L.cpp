@@ -3,27 +3,32 @@
  * @author Rafael Dalzotto (rdalzotto@itba.edu.ar)
  * @brief Main library source file
  * @date 2022-07-04
- * 
+ *
  * @copyright Copyright (c) 2022
  */
 
 #include "SIM800L.h"
 
-#define SMS_TERMINATOR	(char)26  // required according to the datasheet
+#define SMS_TERMINATOR (char)26 // required according to the datasheet
 
-void SIM800L::begin(SoftwareSerial *sim_module, VoidCallbackVoid rst)
+void SIM800L::begin(SoftwareSerial *sim_module, VoidCallback rst)
 {
 	if (sim_module != NULL)
 	{
 		this->resetCallback = rst;
 		this->sim_module = sim_module;
 		sim_module->begin(SIM800L_BAUDRATE);
-		sim_module->setTimeout(SIM800L_READ_CHAR_TIMEOUT); 	// timeout per character
+		sim_module->setTimeout(SIM800L_READ_CHAR_TIMEOUT); // timeout per character
 
 		printAndWaitOK(F("AT"));				// Sync
-		printAndWaitOK(F("AT+CMGF=1")); 		// Select SMS Message Format (1 = text mode)
+		printAndWaitOK(F("AT+CMGF=1"));			// Select SMS Message Format (1 = text mode)
 		printAndWaitOK(F("AT+CNMI=1,2,0,0,0")); // SMS Message Indications
 		printAndWaitOK(F("AT+CLIP=1"));			// Show incoming call telephone number
+		
+		_delay_ms(200);
+		run(); // read buffer
+
+		checkConnection();
 	}
 }
 
@@ -31,16 +36,16 @@ void SIM800L::readToBuffer()
 {
 	unsigned long timestamp = millis();
 	bufferSize = 0;
-	
+
 	// read until no more incoming bytes
 	while ((millis() - timestamp) <= SIM800L_READ_CHAR_TIMEOUT)
 	{
-		if(sim_module->available() && bufferSize < SIM800L_READ_BUF_SIZE)
+		if (sim_module->available() && bufferSize < SIM800L_READ_BUF_SIZE)
 		{
 			buffer[bufferSize++] = sim_module->read();
 			timestamp = millis();
 		}
-		else if(bufferSize >= SIM800L_READ_BUF_SIZE)
+		else if (bufferSize >= SIM800L_READ_BUF_SIZE)
 			break;
 	}
 }
@@ -67,13 +72,9 @@ void SIM800L::parseIncomingSMS()
 			scan.substring(sms.message, '\r', SMS_MESSAGE_MAX_LEN);
 			sms.size = strlen(sms.message);
 
-			if(scan.error() == 0)// no errors
+			if (scan.error() == 0) // no errors
 			{
-				#ifdef PRINT_SMS_SIM800L
-				sms.print();
-				#endif
-
-				if(smsCallback != NULL)
+				if (smsCallback != NULL)
 				{
 					smsCallback(sms);
 				}
@@ -82,24 +83,29 @@ void SIM800L::parseIncomingSMS()
 					DEBUG_PRINT(F("SMS Callback not set!"))
 				}
 			}
+			else
+			{
+				DEBUG_PRINT(F("SMS scan error!"))
+			}
+			
 		}
 	}
 }
 
-void SIM800L::sendMessage(SMSMessage& sms)
+void SIM800L::sendMessage(SMSMessage &sms)
 {
 	DEBUG_PRINT(F("@SEND: Sending message:"));
 	sms.print();
 
-	if(sim_module != NULL)
+	if (sim_module != NULL)
 	{
-		sim_module->print(F("AT+CMGF=1\r\n"));	// Select SMS Message Format (1 = text mode)
+		sim_module->print(F("AT+CMGF=1\r\n")); // Select SMS Message Format (1 = text mode)
 		_delay_ms(100);
 		sim_module->print(F("AT+CMGS=\""));
 		sim_module->print(sms.phone);
 		sim_module->print(F("\"\r"));
 
-		for(int i=0; i < sms.size && (sms.message[i] != NULLCHAR) && i < SMS_MESSAGE_MAX_LEN; i++)
+		for (int i = 0; i < sms.size && (sms.message[i] != NULLCHAR) && i < SMS_MESSAGE_MAX_LEN; i++)
 			sim_module->print(sms.message[i]);
 
 		_delay_ms(30);
@@ -111,14 +117,13 @@ void SIM800L::sendMessage(SMSMessage& sms)
 
 void SIM800L::run()
 {
-	if(sim_module == NULL)
+	if (sim_module == NULL)
 		return;
-		
+
 	// this is non-blocking
-	if(sim_module->available()) // if we have some bytes
+	if (sim_module->available()) // if we have some bytes
 	{
 		readToBuffer();
-		printBuffer();
 
 		uint8_t headSize = 12;
 		char header[headSize];
@@ -126,37 +131,64 @@ void SIM800L::run()
 		strncpy(header, buffer, headSize - 1); // Dont erase last null character!
 
 		// Choose action by header content
-		if (strstr(header, "+CMT:") != NULL)	// New SMS received
+		if (strstr(header, "+CMT:") != NULL) // * New SMS received
 		{
 			parseIncomingSMS();
 		}
-		else if(strstr(header, "+CREG") != NULL) // Network Status
+		else if (strstr(header, "+CREG") != NULL) // * Network Status
 		{
 			ScanUtil scan(buffer, bufferSize);
 			scan.skipTo(',');
 			scan.get_uint8_t(&netStatus);
-			if(scan.error() > 0)
+			if (scan.error() > 0)
 			{
 				DEBUG_PRINT(F("error reading netStatus"))
 				netStatus = 0;
 			}
+
+			if (netStatus != lastNetStatus)
+			{
+				if (netChangedCallback != NULL)
+					netChangedCallback( connected() );
+				lastNetStatus = netStatus;
+
+				if( !connected() )
+				{
+					disconnectedCount++;
+					if(disconnectedCount == SIM800L_AUTO_RESET_AFTER_CHECK_FAILS)
+					{
+						reset();
+					}
+				}
+				else
+					disconnectedCount = 0;
+			}
 		}
-		else if(strstr(buffer, "\"SM\"") != NULL)  // "SM"
+		else if (strstr(buffer, "\"SM\"") != NULL) // * "SM"
 		{
 			DEBUG_PRINT(F("Received \"SM\""))
 			// This should not happen, but here is a workaround
-			printAndWaitOK(F("AT+CMGF=1")); 		// Select SMS Message Format (1 = text mode)
+			printAndWaitOK(F("AT+CMGF=1"));			// Select SMS Message Format (1 = text mode)
 			printAndWaitOK(F("AT+CNMI=1,2,0,0,0")); // SMS Message Indications
 		}
+		else
+		{
+			printBuffer(); // Unknown response
+		}
+	}
 
+	if(millis() - lastMsConnectionCheckInterval >= SIM800L_CONNECTION_CHECK_INTERVAL)
+	{
+		checkConnection();
+		lastMsConnectionCheckInterval = millis();
 	}
 }
 
 void SIM800L::printBuffer()
 {
-	#ifdef PRINT_BUFFER_SIM800L
+#ifdef PRINT_BUFFER_SIM800L
 	Serial.print("\n\n@ SIM800L:\nbuffer: \"");
-	for(unsigned int i=0; i < bufferSize; i++)
+	for (unsigned int i = 0; i < bufferSize; i++)
 	{
 		switch (buffer[i])
 		{
@@ -168,47 +200,36 @@ void SIM800L::printBuffer()
 			break;
 		case '\t':
 			Serial.print("\\t");
-			break;		
+			break;
 		default:
 			Serial.print(buffer[i]);
 			break;
 		}
 	}
 	Serial.print("\"\nbytes: {");
-	for(unsigned int i=0; i < bufferSize; i++)
+	for (unsigned int i = 0; i < bufferSize; i++)
 	{
 		Serial.print((int)(buffer[i]));
 		Serial.print(",");
 	}
 	Serial.println("}");
-	#endif
-}
-
-// Read n bytes from sim module or until terminator has been found and store them in buffer
-// returns pointer to buffer
-char* SIM800L::read_module_bytes(size_t nbytes, char terminator)
-{
-	size_t nread = sim_module->readBytesUntil(terminator, buffer, nbytes);
-
-	// Set null-terminator
-	if(nread >= SIM800L_READ_BUF_SIZE)
-		buffer[SIM800L_READ_BUF_SIZE-1] = (char)0;
-	else
-		buffer[nread] = (char)0;
-
-	return buffer;
+#endif
 }
 
 void SIM800L::reset()
 {
-	if(sim_module != NULL)
+	if (sim_module != NULL)
 	{
-		sim_module->print(F("AT+CFUN=1,1\r\n")); 	// Software Reset
-		_delay_ms(100);
-		if(resetCallback != NULL)
+		sim_module->print(F("AT+CFUN=1,1\r\n")); // Software Reset
+		sim_module->print(F("AT+CFUN=1,1\r\n")); // Software Reset
+		sim_module->print(F("AT+CFUN=1,1\r\n")); // Software Reset
+		_delay_ms(1000);
+		readToBuffer(); // flush serial
+
+		if (resetCallback != NULL)
 			this->resetCallback();
 
-		begin(sim_module, resetCallback);
+		asm("jmp 0x0000");
 	}
 }
 
@@ -226,7 +247,7 @@ void SIM800L::printAndWaitOK(const __FlashStringHelper *msg)
 		{
 			unsigned char c = pgm_read_byte(p++);
 
-			if ( (msg_buf[n] = c) )
+			if ((msg_buf[n] = c))
 				n++;
 			else
 				break; // break in case of a null terminator
@@ -235,25 +256,34 @@ void SIM800L::printAndWaitOK(const __FlashStringHelper *msg)
 		// set a null terminator at the end of buf in case the buffer is full
 		msg_buf[SIM800L_COMM_BUF_SIZE - 1] = (char)0;
 
-		DEBUG_PRINT(msg_buf)
-
-		sim_module->print(msg_buf);
-		sim_module->print(F("\r\n"));
-		_delay_ms(50);
-
 		unsigned long timestamp = millis();
 
-		// TODO: Check maybe its better to just call readToBuffer ??? 
-		while (strstr(read_module_bytes(10), "OK") == NULL) // Read just 10 bytes
+		bool found = false;
+		while (!found)
 		{
+			DEBUG_PRINT(msg_buf)
+
 			sim_module->print(msg_buf);
 			sim_module->print(F("\r\n"));
 
-			_delay_ms(50); // without this delay it doesnt works (maybe a buffering problem)
-			// TODO: Test this again without delay, but with readToBuffer
+			_delay_ms(100); // without this delay it doesnt works (maybe a buffering problem)
+
+			if (sim_module->available()) // if we have some bytes
+			{
+				readToBuffer();
+				printBuffer();
+
+				ScanUtil scan(buffer, bufferSize);
+
+				if(scan.seek("OK"))
+					found = true;
+			}
 
 			if (timestamp + timeout <= millis()) // If long timeout is excedeed
+			{
 				reset();
+				return; // just in case, you know
+			} 
 		}
 	}
 }
