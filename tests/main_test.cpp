@@ -14,8 +14,8 @@
 #include <vector>
 using namespace std;
 
-#include "../ScanUtil.h"
-#include "../SMSMessage.h"
+#include "../src/ScanUtil.h"
+#include "../src/SMSMessage.h"
 
 void printHeader(char* buf);
 void parseIncomingSMS(char* buf);
