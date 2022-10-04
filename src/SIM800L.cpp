@@ -76,7 +76,7 @@ void SIM800L::parseIncomingSMS()
 			{
 				if (smsCallback != NULL)
 				{
-					smsCallback(sms);
+					messageCallback(sms);
 				}
 				else
 				{
@@ -91,6 +91,12 @@ void SIM800L::parseIncomingSMS()
 		}
 	}
 }
+
+void SIM800L::messageCallback(SMSMessage& sms)
+{
+	smsCallback(sms);
+}
+
 
 void SIM800L::sendMessage(SMSMessage &sms)
 {

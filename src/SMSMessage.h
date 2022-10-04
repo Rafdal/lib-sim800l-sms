@@ -93,6 +93,14 @@ public:
      * @retval false = word does not match
      */
     bool compareWordAt(int n, char* wordToCompare);
+    /**
+     * @brief Compare word that appears in the N possition 
+     * 
+     * @param n word count to look for
+     * @param wordToCompare c-string to match
+     * @retval true = match OK
+     * @retval false = word does not match
+     */
     bool compareWordAt(int n, const char* wordToCompare);
 
     /**

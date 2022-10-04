@@ -55,14 +55,14 @@ public:
      * @param simModule pointer to SoftwareSerial instance of SIM module
      * @param rstFunc (optional) function callback to be executed after SIM800L software reset
      */
-    void begin(SoftwareSerial* simModule, VoidCallback rstFunc = NULL);
+    virtual void begin(SoftwareSerial* simModule, VoidCallback rstFunc = NULL);
 
     /**
      * @brief Set SMS Callback
      * 
      * @param callback pointer to void function that receives SMSMessage object
      */
-    void onMessage(SMSCallback callback);
+    virtual void onMessage(SMSCallback callback);
 
     /**
      * @brief Set connection state change callback
@@ -80,7 +80,7 @@ public:
     /**
      * @brief Poll for new data and SMS (Non-blocking), should be called in a real time loop
      */
-    void run();
+    virtual void run();
 
     /**
      * @brief Reset module and restart (also calls rstFunc if set)
@@ -109,13 +109,15 @@ protected:  // for testing purposes
     char buffer[SIM800L_READ_BUF_SIZE];
     unsigned int bufferSize = 0;
 
+    virtual void messageCallback(SMSMessage& sms);
+    SMSCallback smsCallback = NULL;
+
 private:
     unsigned long timeout = 15000L;  // Default timeout (12000ms)
 
     SoftwareSerial *sim_module = NULL;
 
     VoidCallback resetCallback = NULL;
-    SMSCallback smsCallback = NULL;
     BoolCallback netChangedCallback = NULL;
 
     uint8_t netStatus = 0; // disconnected
