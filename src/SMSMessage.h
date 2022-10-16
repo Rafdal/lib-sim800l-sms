@@ -10,7 +10,7 @@
 #ifndef SMSMESSAGE_H
 #define SMSMESSAGE_H
 
-#define SMS_MESSAGE_MAX_LEN     64
+#define SMS_MESSAGE_MAX_LEN     150
 #define SMS_PHONE_NUMBER_SIZE   15  // with '+' and NULL terminator
 #define SMS_WORD_SIZE_MAX       16
 

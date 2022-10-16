@@ -34,7 +34,7 @@ int main()
     // Pretty basic tests are done here
     const char *str1 = "\r\n+CMT: \"+5493487123456\",\"\",\"22/06/28,22:02:24-12\"\r\nBoooenas\r\n\0";
     const char *str2 = "AT+CREG?\r\n\r\n+CREG: 032,1\r\nald82s\0";
-    const char *str3 = "AT+TEST\r\n\r\nNUM: 3487541299\0";
+    const char *str3 = "AT+TEST\r\n\r\nNUM: 3487231239\0";
 
     vector<const char*> strList = {str1, str2, str3};
 

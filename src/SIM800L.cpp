@@ -32,6 +32,7 @@ void SIM800L::begin(SoftwareSerial *sim_module, VoidCallback rst)
 	}
 }
 
+
 void SIM800L::readToBuffer()
 {
 	unsigned long timestamp = millis();
@@ -49,6 +50,7 @@ void SIM800L::readToBuffer()
 			break;
 	}
 }
+
 
 void SIM800L::parseIncomingSMS()
 {
@@ -157,17 +159,6 @@ void SIM800L::run()
 				if (netChangedCallback != NULL)
 					netChangedCallback( connected() );
 				lastNetStatus = netStatus;
-
-				if( !connected() )
-				{
-					disconnectedCount++;
-					if(disconnectedCount == SIM800L_AUTO_RESET_AFTER_CHECK_FAILS)
-					{
-						reset();
-					}
-				}
-				else
-					disconnectedCount = 0;
 			}
 		}
 		else if (strstr(buffer, "\"SM\"") != NULL) // * "SM"
@@ -185,6 +176,14 @@ void SIM800L::run()
 
 	if(millis() - lastMsConnectionCheckInterval >= SIM800L_CONNECTION_CHECK_INTERVAL)
 	{
+		if( !connected() )
+		{
+			disconnectedCount++;
+			if(disconnectedCount == SIM800L_AUTO_RESET_AFTER_CHECK_FAILS)
+				reset();
+		}
+		else
+			disconnectedCount = 0;
 		checkConnection();
 		lastMsConnectionCheckInterval = millis();
 	}

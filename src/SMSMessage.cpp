@@ -25,6 +25,7 @@ SMSMessage::SMSMessage()
     memset(message, 0, SMS_MESSAGE_MAX_LEN);
 }
 
+// TODO: Optimize this
 int SMSMessage::countWords()
 {
     int count = 0;
@@ -40,7 +41,7 @@ int SMSMessage::countWords()
     return count;
 }
 
-// TODO: Optimize this shit
+// TODO: Optimize this SHIT
 bool SMSMessage::getNWord(int idx, char* word)
 {
     int count = -1;
@@ -73,7 +74,7 @@ bool SMSMessage::getNWord(int idx, char* word)
     return false;
 }
 
-// TODO: Optimize this shit
+// TODO: Optimize this SHIT
 bool SMSMessage::compareWordAt(int n, char* wordToCompare)
 {
     char word[SMS_WORD_SIZE_MAX];

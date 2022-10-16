@@ -45,6 +45,13 @@ public:
      * @retval 0 = not found or mismatch
      */
     int seek(char* cstr);
+    /**
+     * @brief Seek string and move to the position after
+     * 
+     * @param cstr  C-style string (null-terminated string)
+     * @retval 1 = found
+     * @retval 0 = not found or mismatch
+     */
     int seek(const char* cstr);
 
     /**

@@ -3,7 +3,7 @@
 #include <SoftwareSerial.h>
 #include <SIM800L.h>
 
-SoftwareSerial	simSerial(5,6); // 4,11  --- (RX , TX) ----- 5,6
+SoftwareSerial	simSerial(5,6); // (RX , TX)
 SIM800L sim;
 
 
@@ -61,7 +61,7 @@ void messageCallback(SMSMessage& sms)
 
 	if( sms.search("info") )
 	{
-		const char str[] = "INFORMACION\nPARA AGUS CASAS";
+		const char str[] = "INFORMACION\nFOR YOU";
 		strcpy(sms.message, str);
 		sms.size = strlen(str);
 
