@@ -33,23 +33,23 @@ void setup()
 	Serial.begin(115200);
 	Serial.println("SIM800L TEST");
 
-    sim.begin(&simSerial);
+	sim.begin(&simSerial);
 
 	Serial.print("Time to start: ");
 	Serial.print((float)( millis() / 1000.0f ), 1);
 	Serial.println(" s");
 
-    sim.onMessage(messageCallback);
+	sim.onMessage(messageCallback);
 
 	sim.onConnectionStateChanged([](bool connected){
-        Serial.print(F("@ SIM: Connection status: "));
-        Serial.println(connected);
+		Serial.print(F("@ SIM: Connection status: "));
+		Serial.println(connected);
 	});
 }
 
 void loop()
 {
-    sim.run();
+	sim.run();
 }
 
 void messageCallback(SMSMessage& sms)
